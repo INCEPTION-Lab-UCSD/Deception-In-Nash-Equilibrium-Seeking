@@ -47,9 +47,9 @@ def s_1_duopoly(x_1, x_2, p, S_d):
 
 
 def J_1_oblivious_duopoly(x, delta_2, p, m_1, S_d):
-    inflated_sales = s_1_duopoly(x[0], x[1], p, S_d) + (
-        delta_2 / (2.0 * p)
-    ) * (x[0] - m_1)
+    inflated_sales = s_1_duopoly(x[0], x[1], p, S_d) + (delta_2 / (2.0 * p)) * (
+        x[0] - m_1
+    )
     return inflated_sales * (x[0] - m_1)
 
 
@@ -73,7 +73,9 @@ def x_1_duopoly(u_1, a, omega_1, time_value):
 
 
 def x_2_duopoly(u_2, a, omega_1, omega_2, delta_2, time_value):
-    return u_2 + a * (np.sin(omega_2 * time_value) + delta_2 * np.sin(omega_1 * time_value))
+    return u_2 + a * (
+        np.sin(omega_2 * time_value) + delta_2 * np.sin(omega_1 * time_value)
+    )
 
 
 def delta_2_update_duopoly_deception(x, epsilon, J_2_ref, p, m_2):
@@ -126,11 +128,15 @@ def simulate_duopoly(
         s_1_deception = s_1_duopoly(
             actions_1_deception[idx], actions_2_deception[idx], p, S_d
         )
-        s_2_deception = s_2_duopoly(p, actions_1_deception[idx], actions_2_deception[idx])
+        s_2_deception = s_2_duopoly(
+            p, actions_1_deception[idx], actions_2_deception[idx]
+        )
 
         J_1[idx] = J_i_duopoly(s_1, actions_1[idx], m[0])
         J_2[idx] = J_i_duopoly(s_2, actions_2[idx], m[1])
-        J_1_deception[idx] = J_1_oblivious_duopoly(state_deception, delta_2, p, m[0], S_d)
+        J_1_deception[idx] = J_1_oblivious_duopoly(
+            state_deception, delta_2, p, m[0], S_d
+        )
         J_2_deception[idx] = J_i_duopoly(s_2_deception, actions_2_deception[idx], m[1])
         delta[idx] = delta_2
 
@@ -200,10 +206,20 @@ def plot_duopoly(simulation, J_2_ref):
     ax_actions, ax_payoffs, ax_delta = axes
 
     ax_actions.plot(
-        simulation.time, simulation.actions_1, color="tab:blue", linestyle=":", linewidth=2.3, label=r"$x_1$"
+        simulation.time,
+        simulation.actions_1,
+        color="tab:blue",
+        linestyle=":",
+        linewidth=2.3,
+        label=r"$x_1$",
     )
     ax_actions.plot(
-        simulation.time, simulation.actions_2, color="tab:orange", linestyle=":", linewidth=2.3, label=r"$x_2$"
+        simulation.time,
+        simulation.actions_2,
+        color="tab:orange",
+        linestyle=":",
+        linewidth=2.3,
+        label=r"$x_2$",
     )
     ax_actions.plot(
         simulation.time,
@@ -220,9 +236,20 @@ def plot_duopoly(simulation, J_2_ref):
         label=r"$x_2$ with deception",
     )
     ax_actions.axhline(
-        simulation.x_delta_star[0], color="black", linewidth=1.8, alpha=0.9, label=r"$x_{\delta,1}$"
+        simulation.x_delta_star[0],
+        color="black",
+        linewidth=1.8,
+        alpha=0.9,
+        label=r"$x_{\delta,1}$",
     )
-    ax_actions.axhline(simulation.x_star[1], color="black", linewidth=1.8, linestyle="--", alpha=0.9, label=r"$x_2^\ast$")
+    ax_actions.axhline(
+        simulation.x_star[1],
+        color="black",
+        linewidth=1.8,
+        linestyle="--",
+        alpha=0.9,
+        label=r"$x_2^\ast$",
+    )
     ax_actions.set_xlim(simulation.time[0], simulation.time[-1])
     ax_actions.set_xlabel("Time (s)")
     ax_actions.set_ylabel("Action")
@@ -243,13 +270,28 @@ def plot_duopoly(simulation, J_2_ref):
         label=r"$J_2$ with deception",
     )
     ax_payoffs.plot(
-        simulation.time, simulation.J_1, color="tab:blue", linestyle=":", linewidth=2.3, label=r"$J_1$"
+        simulation.time,
+        simulation.J_1,
+        color="tab:blue",
+        linestyle=":",
+        linewidth=2.3,
+        label=r"$J_1$",
     )
     ax_payoffs.plot(
-        simulation.time, simulation.J_2, color="tab:orange", linestyle=":", linewidth=2.3, label=r"$J_2$"
+        simulation.time,
+        simulation.J_2,
+        color="tab:orange",
+        linestyle=":",
+        linewidth=2.3,
+        label=r"$J_2$",
     )
     ax_payoffs.axhline(
-        J_2_ref, color="black", linestyle="--", linewidth=1.8, dashes=(3, 3), label=r"$J_2^{ref}$"
+        J_2_ref,
+        color="black",
+        linestyle="--",
+        linewidth=1.8,
+        dashes=(3, 3),
+        label=r"$J_2^{ref}$",
     )
     ax_payoffs.set_xlim(simulation.time[0], simulation.time[-1])
     ax_payoffs.set_xlabel("Time (s)")

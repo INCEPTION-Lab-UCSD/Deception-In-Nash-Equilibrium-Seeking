@@ -1,6 +1,6 @@
 import numpy as np
 
-import visualizations
+import duopoly
 
 
 def main():
@@ -17,9 +17,7 @@ def main():
     S_d = 100.0
     t = 100.0
 
-    visualizations.run_duopoly(
-        x, a, k, omega_1, omega_2, J_2_ref, epsilon, S_d, u, p, m, t
-    )
+    duopoly.run_duopoly(x, a, k, omega_1, omega_2, J_2_ref, epsilon, S_d, u, p, m, t)
 
 
 if __name__ == "__main__":
