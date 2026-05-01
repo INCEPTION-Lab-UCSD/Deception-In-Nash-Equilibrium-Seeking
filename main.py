@@ -41,6 +41,7 @@ def main():
         isoprofit_levels=[250.0, 500.0, 750.0],
         frame_step=20,
     )
+    anim.animation.save("Duopoly_with_Deception_Simulation.gif", writer="pillow")
 
     _ = anim
     plt.show()

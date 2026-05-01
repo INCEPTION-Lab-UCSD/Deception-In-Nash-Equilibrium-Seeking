@@ -360,7 +360,7 @@ def plot_duopoly(simulation, J_2_ref):
     ax_delta.set_xlim(simulation.time[0], simulation.time[-1])
     ax_delta.set_xlabel("Time (s)")
     ax_delta.set_ylabel(r"$\delta$")
-    ax_delta.legend(loc="upper right", frameon=True, fancybox=False, edgecolor="0.6")
+    ax_delta.legend(loc="bottom right", frameon=True, fancybox=False, edgecolor="0.6")
 
     return fig, axes
 
@@ -381,6 +381,7 @@ def run_duopoly(x, a, k, omega_1, omega_2, J_2_ref, epsilon, S_d, u, p, m, t):
         horizon=t,
     )
     fig, _ = plot_duopoly(simulation, J_2_ref)
+
     if plt.get_backend().lower() != "agg":
         plt.show()
     return simulation, fig
@@ -489,6 +490,7 @@ def animate_reaction_curves(
         label="Nominal RC for player 1",
         zorder=1,
     )
+    ax.set_title("Duopoly Simulation with Deception")
     for level, upper_branch, lower_branch in isoprofit_curves:
         ax.plot(
             x_1,
@@ -508,24 +510,24 @@ def animate_reaction_curves(
         valid_upper = np.isfinite(upper_branch)
         valid_lower = np.isfinite(lower_branch)
         if np.any(valid_upper):
-            upper_idx = np.where(valid_upper)[0][
-                min(18, np.count_nonzero(valid_upper) - 1)
+            upper_valid_indices = np.where(valid_upper)[0]
+            upper_position = {
+                750.0: 0.72,
+                500.0: 0.52,
+                250.0: 0.36,
+            }.get(float(level), 0.58)
+            upper_idx = upper_valid_indices[
+                min(
+                    int(upper_position * (len(upper_valid_indices) - 1)),
+                    len(upper_valid_indices) - 1,
+                )
             ]
             ax.text(
-                x_1[upper_idx] + 0.8,
-                upper_branch[upper_idx] + 0.8,
+                x_1[upper_idx] + 1.1,
+                upper_branch[upper_idx] + 1.2,
                 rf"$J_2={level:g}$",
                 color="0.25",
             )
-        if np.any(valid_lower):
-            lower_idx = np.where(valid_lower)[0][-1]
-            ax.text(
-                x_1[lower_idx] - 8.0,
-                lower_branch[lower_idx] - 2.0,
-                rf"$J_2={level:g}$",
-                color="0.25",
-            )
-
     persistent_rc_lines = []
     for curve in rc_curves:
         (line,) = ax.plot(
@@ -549,7 +551,7 @@ def animate_reaction_curves(
     (trajectory_line,) = ax.plot(
         [],
         [],
-        color="0.35",
+        color="red",
         linewidth=1.4,
         label="Deceptive action trajectory",
         zorder=4,
@@ -590,7 +592,7 @@ def animate_reaction_curves(
 
     delta_text = ax.text(
         0.03,
-        0.95,
+        0.65,
         "",
         transform=ax.transAxes,
         ha="left",
@@ -607,7 +609,17 @@ def animate_reaction_curves(
     ax.set_ylim(y_min - 1.5, y_max + 1.5)
     ax.set_xlabel(r"$x_1$")
     ax.set_ylabel(r"$x_2$")
-    ax.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.6")
+    ax.legend(
+        loc="upper left",
+        frameon=True,
+        fancybox=False,
+        edgecolor="0.6",
+        fontsize=11,
+        handlelength=1.3,
+        handletextpad=0.4,
+        borderpad=0.35,
+        labelspacing=0.3,
+    )
 
     def update(frame_idx):
         delta_2 = float(sampled_delta[frame_idx])
@@ -658,38 +670,3 @@ def animate_reaction_curves(
     update(0)
 
     return ReactionCurveAnimation(animation=ani, figure=fig, axes=ax)
-
-
-def anima_reaction_curves(
-    simulation,
-    m,
-    p,
-    S_d,
-    isoprofit_levels=None,
-    x1_limits=(25.0, 70.0),
-    frame_step=20,
-    interval=60,
-):
-    delta_values = np.asarray(simulation.delta, dtype=float)
-    actions_1_deception = simulation.actions_1_deception
-    actions_2_deception = simulation.actions_2_deception
-    time_values = simulation.time
-
-    x_1 = np.linspace(x1_limits[0], x1_limits[1])
-    rotation_point = np.array([m[0], m[0] - S_d * p])
-    frame_indices = np.arange(0, len(delta_values), frame_step, dtype=int)
-    sampled_delta = delta_values[frame_indices]
-    sampled_actions_1 = actions_1_deception[frame_indices]
-    sampled_actions_2 = actions_2_deception[frame_indices]
-    sampled_time = time_values[frame_indices]
-    rc_curves = np.array(
-        [RC_1_deceptive_x2(x_1, m, S_d, p, delta_2) for delta_2 in sampled_delta]
-    )
-
-    isoprofit_levels = [] if isoprofit_levels == None else list(isoprofit_levels)
-
-    isoprofit_curves = [
-        (level, *isoprofit_2(x_1, m, p, level)) for level in isoprofit_levels
-    ]
-
-    return
