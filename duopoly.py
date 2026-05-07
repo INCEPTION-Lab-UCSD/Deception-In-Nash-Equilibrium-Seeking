@@ -241,6 +241,37 @@ def simulate_duopoly(
     )
 
 
+def plotter(simulation, J_2_ref):
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5), constrained_layout=True)
+    actions, cost, delta = axes
+
+    actions.plot(simulation.time, simulation.actions_1, color="b", label=r"x_1")
+    actions.plot(
+        simulation.time, simulation.actions_2, color="cornflowerblue", label=r"x_2"
+    )
+    actions.plot(
+        simulation.time,
+        simulation.actions_1_deception,
+        color="moccasin",
+        label=r"x_1 with deception",
+    )
+    actions.plot(
+        simulation.time,
+        simulation.actions_2_deception,
+        color="wheat",
+        label=r"x_2 with deception",
+    )
+    actions.axhline(
+        simulation.x_delta_star, linestyle="--", color="black", label=r"x_{\delta, 1}"
+    )
+    actions.axhline(simulation.x_star[1], linestyle="--", color="black", label=r"x_2^*")
+    actions.set_xlabel("Time (s)")
+    actions.set_ylabel("Action")
+    actions.legend(loc="best", alignment="center", frameon=True)
+
+    cost.plot(simulation.time, simulation.J_1)
+
+
 def plot_duopoly(simulation, J_2_ref):
     sns.set_theme(style="white", context="talk")
     plt.rcParams.update(
@@ -312,6 +343,7 @@ def plot_duopoly(simulation, J_2_ref):
         linewidth=2.5,
         label=r"$J_1$ with deception",
     )
+
     ax_payoffs.plot(
         simulation.time,
         simulation.J_2_deception,
@@ -360,7 +392,7 @@ def plot_duopoly(simulation, J_2_ref):
     ax_delta.set_xlim(simulation.time[0], simulation.time[-1])
     ax_delta.set_xlabel("Time (s)")
     ax_delta.set_ylabel(r"$\delta$")
-    ax_delta.legend(loc="bottom right", frameon=True, fancybox=False, edgecolor="0.6")
+    ax_delta.legend(loc="lower right", frameon=True, fancybox=False, edgecolor="0.6")
 
     return fig, axes
 
@@ -420,7 +452,9 @@ def animate_reaction_curves(
         }
     )
 
+    # delta_values.shape = (time_horizon / dt, )
     delta_values = np.asarray(simulation.delta, dtype=float)
+
     actions_1_deception = np.asarray(simulation.actions_1_deception, dtype=float)
     actions_2_deception = np.asarray(simulation.actions_2_deception, dtype=float)
     time_values = np.asarray(simulation.time, dtype=float)

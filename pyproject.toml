@@ -9,5 +9,7 @@ dependencies = [
     "matplotlib>=3.10.8",
     "numpy>=2.4.4",
     "opencv-python>=4.13.0.92",
+    "plotly>=6.7.0",
     "seaborn>=0.13.2",
+    "vpython>=7.6.5",
 ]

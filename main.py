@@ -33,6 +33,10 @@ def main():
         horizon=t,
     )
 
+    # plot = duopoly.run_duopoly(
+    #     x, a, k, omega_1, omega_2, J_2_ref, epsilon, S_d, u, p, m, t
+    # )
+
     anim = duopoly.animate_reaction_curves(
         simulation=simulation,
         m=m,
