@@ -55,6 +55,10 @@ def J_2_duopoly_grad_2(x, p, m_2):
     return -(x[0] / p) + (2.0 * x[1] / p) - (m_2 / p)
 
 
+def J_2_duopoly_grad_1(x, p, m_2):
+    return (x[1] / p) - (m_2 / p)
+
+
 def s_2_duopoly(p, x_1, x_2):
     return (x_1 - x_2) / p
 

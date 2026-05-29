@@ -10,6 +10,7 @@ dependencies = [
     "numpy>=2.4.4",
     "opencv-python>=4.13.0.92",
     "plotly>=6.7.0",
+    "scipy>=1.17.1",
     "seaborn>=0.13.2",
     "vpython>=7.6.5",
 ]
