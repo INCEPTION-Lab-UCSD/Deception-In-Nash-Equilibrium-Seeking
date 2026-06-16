@@ -389,6 +389,7 @@ def plot_quadratic_example_6(simulation):
     colors = ["tab:blue", "tab:orange", "tab:green"]
     labels = [r"$J_1$", r"$J_2$", r"$J_3$"]
     nominal_indices = nominal_payoff_plot_indices(simulation.time)
+    ax.set_title("Quadratic Game")
 
     # loop through player payoffs
     line_nominal = []

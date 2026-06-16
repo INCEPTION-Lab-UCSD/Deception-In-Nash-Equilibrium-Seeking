@@ -1,9 +1,11 @@
+import math
 from dataclasses import dataclass
 
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from scipy.integrate import solve_ivp
 
 import duopoly
 
@@ -36,62 +38,203 @@ def x_2_duopoly_mutual(u_2, a, delta_1, delta_2, omega_1, omega_2, time_value):
     )
 
 
+def Q_1(p):
+    return 2 * np.array([[-1 / p, 1 / (2 * p)], [1 / (2 * p), 0]])
+
+
+def Q_2(p):
+    return 2 * np.array([[0, 1 / (2 * p)], [1 / (2 * p), -1 / p]])
+
+
+def pseudogradient_Q(Q_list):
+    pseudograd = [Q_list[i][i, :] for i in range(len(Q_list))]
+    return np.array(pseudograd)
+
+
+def pseudogradient_b(b_list):
+    pseudograd = [b_list[i][i] for i in range(len(b_list))]
+    return pseudograd
+
+
+def b_1(p, m_1, S_d):
+    return np.array([(m_1 + S_d * p) / p, -1 * m_1 / p])
+
+
+def b_2(p, m_2):
+    return np.array([-1 * m_2 / p, m_2 / p])
+
+
+def A_0(Q_1, Q_2):
+    return np.array(Q_1[1, :], Q_2[2, :])
+
+
+def b_0(b_1, b_2):
+    return np.array([b_1[1], b_2[2]])
+
+
+def policy(t, omega_1, omega_2, delta_1, delta_2):
+    return np.array(
+        [
+            np.sin(omega_1 * t) + delta_1 * np.sin(omega_2 * t),
+            np.sin(omega_2 * t) + delta_2 * np.sin(omega_1 * t),
+        ]
+    )
+
+
+def J_1_quadratic(x, Q_1, b_1):
+    return 0.5 * x.T @ Q_1 @ x + b_1.T @ x - 3000
+
+
+def J_2_quadratic(x, Q_2, b_2):
+    return 0.5 * x.T @ Q_2 @ x + b_2.T @ x
+
+
+def J_2_quad(r_2, epsilon, r_1, x_0, Q_2, b_2):
+    return r_2 * epsilon**2 + r_1 * epsilon + J_2_quadratic(x_0, Q_2, b_2)
+
+
+def u_dot(omega_1, omega_2, t, k, a, x, Q_1, b_1, S_d, Q_2, b_2):
+
+    return np.array(
+        [
+            -(2 * k) / a * J_1_quadratic(x, Q_1, b_1, S_d) * np.sin(omega_1 * t),
+            -(2 * k) / a * J_2_quadratic(x, Q_2, b_2) * np.sin(omega_2 * t),
+        ]
+    )
+
+
+def phi(Q_2):
+    return np.array([1, -1 * Q_2[1, 2] / Q_2[2, 2]])
+
+
+def prices(t, u, delta_1, delta_2, omega_1, omega_2, a):
+    return u + a * policy(t, omega_1, omega_2, delta_1, delta_2)
+
+
 def delta_update(epsilon, epsilon_i, J_i, J_i_ref):
     return epsilon * epsilon_i * (J_i - J_i_ref)
 
 
-def J_2_deceived(x_1, x_2, m_2, p, delta_1):
-    x_1_bar = x_1 - 0.5 * delta_1 * m_2
-    x_2_bar = (1.0 - 0.5 * delta_1) * x_2
-    sigma_2 = (delta_1 * m_2**2.0) / (2.0 * p)
+def sol(
+    time_horizon,
+    u_0,
+    omega_1,
+    omega_2,
+    a,
+    Q_1,
+    b_1,
+    Q_2,
+    b_2,
+    k,
+    epsilon_1,
+    epsilon_2,
+    J_1_ref,
+    J_2_ref,
+    rtol=1e-6,
+    atol=1e-8,
+):
+    sol = solve_ivp(
+        fun=udot,
+        t_span=(0, time_horizon),
+        y0=u_0,
+        rtol=rtol,
+        atol=atol,
+        dense_output=False,
+        args=(
+            omega_1,
+            omega_2,
+            a,
+            Q_1,
+            b_1,
+            Q_2,
+            b_2,
+            k,
+            epsilon_1,
+            epsilon_2,
+            J_1_ref,
+            J_2_ref,
+        ),
+    )
 
-    return -(1 / p) * (x_1_bar - x_2_bar) * (x_2 - m_2) + sigma_2
+    if not sol.success:
+        raise RuntimeError(f"solve_ivp failed: {sol.message}")
 
-
-def J_1_deceived(x_1, x_2, m_1, p, delta_2, S_d):
-    x_1_bar = x_1 - 0.5 * delta_2 * m_1
-    x_2_bar = (1.0 - 0.5 * delta_2) * x_2
-    s_2_bar = (x_1_bar - x_2_bar) / p
-    s_1_bar = S_d - s_2_bar
-    sigma_1 = (delta_2 * m_1**2.0) / (2.0 * p)
-    return s_1_bar * (x_1 - m_1) + sigma_1
-
-
-# def J_1_deceived(x_1, x_2, m_1, p, delta_2, S_d):
-#     x_1_bar = x_1 - 0.5 * delta_2 * m_1
-#     x_2_bar = (1.0 - 0.5 * delta_2) * x_2
-#     sigma_1 = (delta_2 * m_1**2.0) / (2.0 * p)
-#     return (1.0 / p) * (x_1_bar - x_2_bar) * (
-#         x_1 - m_1
-#     ) + sigma_1  # note sign: J̃₁ uses s̃₁
-
-
-def J_1_grad_1(x_1, x_2, m_1, delta_2, p, S_d):
-    x_1_bar = x_1 - 0.5 * delta_2 * m_1
-    x_2_bar = (1.0 - 0.5 * delta_2) * x_2
-    return S_d - (x_1_bar - x_2_bar) / p - (x_1 - m_1) / p
-
-
-# def J_1_grad_1(x_1, x_2, m_1, delta_2, p):
-#     return (1.0 / p) * (2.0 * (1.0 - 0.5 * delta_2) * x_1 - m_1 - x_2)
-
-
-def J_1_grad_2(x_1, m_1, delta_2, p):
-    return -1.0 / p * (1.0 - delta_2 / 2.0) * (x_1 - m_1)
-
-
-def J_2_grad_1(x_2, m_2, p):
-    return (-x_2 + m_2) / p
-
-
-def J_2_grad_2(x_1, x_2, m_2, delta_1, p):
-    x_1_bar = x_1 - 0.5 * delta_1 * m_2
-    x_2_bar = (1.0 - 0.5 * delta_1) * x_2
-    return (1.0 / p) * (1.0 - 0.5 * delta_1) * (x_2 - m_2) - (x_1_bar - x_2_bar) / p
+    print(f" Done. {sol.t.size} adaptive steps taken.")
+    return sol
 
 
-# def J_2_grad_2(x_1, x_2, m_2, delta_1, p):
-#     return (1.0 / p) * (2.0 * (1.0 - 0.5 * delta_1) * x_2 - m_2 - x_1)
+def udot(
+    t,
+    u,
+    omega_1,
+    omega_2,
+    a,
+    Q_1,
+    b_1,
+    Q_2,
+    b_2,
+    k,
+    epsilon_1,
+    epsilon_2,
+    J_1_ref,
+    J_2_ref,
+):
+    x = prices(t, u[:2], u[2], u[3], omega_1, omega_2, a)
+    J_1 = J_1_quadratic(x, Q_1, b_1)
+    J_2 = J_2_quadratic(x, Q_2, b_2)
+
+    return np.array(
+        [
+            -2.0 * k / a * J_1 * np.sin(omega_1 * t),
+            (-2.0 * k / a) * J_2 * np.sin(omega_2 * t),
+            epsilon_1 * (J_1 - J_1_ref),
+            epsilon_2 * (J_2 - J_2_ref),
+        ]
+    )
+
+
+def first_order_u_dot(
+    time_value,
+    state,
+    a,
+    k,
+    omega_1,
+    omega_2,
+    Q_1_matrix,
+    b_1_vector,
+    Q_2_matrix,
+    b_2_vector,
+    S_d,
+    J_1_ref,
+    J_2_ref,
+    epsilon_1,
+    epsilon_2,
+):
+    price_vector = prices(
+        time_value,
+        state[:2],
+        state[2],
+        state[3],
+        omega_1,
+        omega_2,
+        a,
+    )
+    J_1_value = J_1_quadratic(price_vector, Q_1_matrix, b_1_vector)
+    J_2_value = J_2_quadratic(price_vector, Q_2_matrix, b_2_vector)
+
+    if not math.isnan(J_1_value):
+        print(J_1_value)
+        print(J_2_value)
+
+    return np.array(
+        [
+            (-2.0 * k / a) * J_1_value * np.sin(omega_1 * time_value),
+            (-2.0 * k / a) * J_2_value * np.sin(omega_2 * time_value),
+            epsilon_1 * (J_1_value - J_1_ref),
+            epsilon_2 * (J_2_value - J_2_ref),
+        ],
+        dtype=float,
+    )
 
 
 def simulate_mutual_deception_duopoly_first_order(
@@ -109,14 +252,18 @@ def simulate_mutual_deception_duopoly_first_order(
     p,
     m,
     horizon,
-    dt=0.05,
+    dt=0.001,
     delta_limit=8.0,
     action_limits=(0.0, 120.0),
 ):
     time = np.arange(0.0, horizon + dt, dt)
-    state = np.array(x0, dtype=float).copy()
-    delta_1 = 0.0
-    delta_2 = 0.0
+
+    # state = [action_1, action_2, delta_1]
+    state = np.array([x0[0], x0[1], 0.0, 0.0], dtype=float)
+    Q_1_matrix = Q_1(p)
+    Q_2_matrix = Q_2(p)
+    b_1_vector = b_1(p, m[0], S_d)
+    b_2_vector = b_2(p, m[1])
 
     J_1 = np.empty_like(time)
     J_2 = np.empty_like(time)
@@ -124,55 +271,40 @@ def simulate_mutual_deception_duopoly_first_order(
     delta_2_history = np.empty_like(time)
 
     for idx, time_value in enumerate(time):
-        action_1 = x_1_duopoly_mutual(
-            state[0], a, omega_1, omega_2, delta_1, m[1], time_value
-        )
-        action_2 = x_2_duopoly_mutual(
-            state[1], a, delta_1, delta_2, omega_1, omega_2, time_value
-        )
-        action_1 = float(np.clip(action_1, *action_limits))
-        action_2 = float(np.clip(action_2, *action_limits))
-        s_1 = duopoly.s_1_duopoly(action_1, action_2, p, S_d)
-        s_2 = duopoly.s_2_duopoly(p, action_1, action_2)
-        J_1[idx] = duopoly.J_i_duopoly(s_1, action_1, m[0])
-        J_2[idx] = duopoly.J_i_duopoly(s_2, action_2, m[1])
-
-        # J_1[idx] = J_1_deceived(action_1, action_2, m[0], p, delta_2, S_d)
-        # J_2[idx] = J_2_deceived(action_1, action_2, m[1], p, delta_1)
-        delta_1_history[idx] = delta_1
-        delta_2_history[idx] = delta_2
+        J_1[idx] = J_1_quadratic(state[:2], Q_1_matrix, b_1_vector)
+        J_2[idx] = J_2_quadratic(state[:2], Q_2_matrix, b_2_vector)
+        delta_1_history[idx] = state[2]
+        delta_2_history[idx] = state[3]
 
         if idx == len(time) - 1:
             continue
 
-        gradient = np.asarray(
-            [
-                J_1_grad_1(state[0], state[1], m[0], delta_2, p, S_d),
-                J_2_grad_2(state[0], state[1], m[1], delta_1, p),
-            ]
+        u_dot_args = (
+            a,
+            k,
+            omega_1,
+            omega_2,
+            Q_1_matrix,
+            b_1_vector,
+            Q_2_matrix,
+            b_2_vector,
+            S_d,
+            J_1_ref,
+            J_2_ref,
+            epsilon_1,
+            epsilon_2,
         )
+        k_1 = first_order_u_dot(time_value, state, *u_dot_args)
+        k_2 = first_order_u_dot(
+            time_value + 0.5 * dt, state + 0.5 * dt * k_1, *u_dot_args
+        )
+        k_3 = first_order_u_dot(
+            time_value + 0.5 * dt, state + 0.5 * dt * k_2, *u_dot_args
+        )
+        k_4 = first_order_u_dot(time_value + dt, state + dt * k_3, *u_dot_args)
+        state = state + (dt / 6.0) * (k_1 + 2.0 * k_2 + 2.0 * k_3 + k_4)
 
-        # gradient = np.asarray(
-        #     [
-        #         J_1_grad_1(state[0], state[1], m[0], delta_2, p)
-        #         + delta_2 * J_1_grad_2(state[0], m[0], delta_2, p),
-        #         J_2_grad_2(state[0], state[1], m[1], delta_1, p)
-        #         + delta_1 * J_2_grad_1(state[1], m[1], p),
-        #     ],
-        #     dtype=float,
-        # )
-        state = np.clip(state - dt * k * gradient, *action_limits)
-
-        delta_1 = np.clip(
-            delta_1 + dt * delta_update(epsilon, epsilon_1, J_1[idx], J_1_ref),
-            -delta_limit,
-            delta_limit,
-        )
-        delta_2 = np.clip(
-            delta_2 + dt * delta_update(epsilon, epsilon_2, J_2[idx], J_2_ref),
-            -delta_limit,
-            delta_limit,
-        )
+    _ = epsilon, delta_limit, action_limits
 
     return {
         "time": time,
@@ -255,12 +387,8 @@ def simulate_mutual_deception_duopoly_second_order(
         compensator_2 = compensator_2 + dt * (
             epsilon_2 * delta_2_error - compensator_gain_2 * compensator_2
         )
-        delta_1 = float(
-            np.clip(delta_1 + dt * compensator_1, -delta_limit, delta_limit)
-        )
-        delta_2 = float(
-            np.clip(delta_2 + dt * compensator_2, -delta_limit, delta_limit)
-        )
+        delta_1 = float(delta_1 + dt * compensator_1)
+        delta_2 = float(delta_2 + dt * compensator_2)
 
     return {
         "time": time,
@@ -288,11 +416,16 @@ def simulate_mutual_deception_duopoly(
     first_order_horizon=1000.0,
     second_order_horizon=50.0,
     dt=0.05,
+    first_order_dt=0.0001,
+    second_order_dt=None,
     compensator_gain_1=0.45,
     compensator_gain_2=0.65,
     delta_limit=8.0,
     action_limits=(0.0, 120.0),
 ):
+    if second_order_dt is None:
+        second_order_dt = dt
+
     first_order = simulate_mutual_deception_duopoly_first_order(
         x0=x0,
         a=a,
@@ -308,7 +441,7 @@ def simulate_mutual_deception_duopoly(
         p=p,
         m=m,
         horizon=first_order_horizon,
-        dt=dt,
+        dt=first_order_dt,
         delta_limit=delta_limit,
         action_limits=action_limits,
     )
@@ -329,12 +462,10 @@ def simulate_mutual_deception_duopoly(
         p=p,
         m=m,
         horizon=second_order_horizon,
-        dt=dt,
+        dt=second_order_dt,
         delta_limit=delta_limit,
         action_limits=action_limits,
     )
-    print(second_order["delta_1"])
-    print(second_order["delta_2"])
 
     return MutualDeceptionDuopolySimulation(
         time_first_order=first_order["time"],

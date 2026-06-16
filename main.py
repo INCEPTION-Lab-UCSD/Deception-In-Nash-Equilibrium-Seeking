@@ -35,12 +35,12 @@ def run_duopoly_example():
         horizon=t,
     )
 
-    anim = duopoly.animate_duopoly_plot(
-        simulation=simulation,
-        J_2_ref=J_2_ref,
-        frame_step=20,
-    )
-    _ = anim
+    # anim = duopoly.animate_duopoly_plot(
+    #     simulation=simulation,
+    #     J_2_ref=J_2_ref,
+    #     frame_step=20,
+    # )
+    # _ = anim
 
     # duopoly.run_duopoly(
     #     x, a, k, omega_1, omega_2, J_2_ref, epsilon, S_d, u, p, m, t
@@ -56,21 +56,26 @@ def run_duopoly_example():
     # )
     # anim.animation.save("Duopoly_with_Deception_Simulation.gif", writer="pillow")
 
-    # anim = duopoly.duopoly_animation_3d(simulation, m, p, S_d)
+    anim = duopoly.duopoly_animation_3d(simulation, m, p, S_d)
+    _ = anim
+
+    anim.animation.save("duopoly_game_payoff_curves.gif")
     plt.show()
 
 
 def run_mutual_deception_duopoly_example():
-    x = np.array([50.0, 110.0 / 3.0])
+    x = np.array([50.0, 100.0 / 3.0])
     a = 0.05
-    k = 0.03
-    omega_1 = 7877.75
-    omega_2 = 7436.5
+    k = -0.03
+    # omega_1 = 7877.75
+    # omega_2 = 7436.5
+    omega_1 = 11877.75
+    omega_2 = 12436.5
     J_1_ref = 1200.0
     J_2_ref = 1800.0
-    epsilon = 0.001
-    epsilon_1 = 1.0
-    epsilon_2 = 0.5
+    epsilon = -0.001
+    epsilon_1 = -0.001
+    epsilon_2 = -0.0005
     m = np.array([30.0, 30.0])
     p = 0.2
     S_d = 100.0
@@ -91,13 +96,12 @@ def run_mutual_deception_duopoly_example():
         m=m,
         first_order_horizon=1000.0,
         second_order_horizon=50.0,
-        dt=0.05,
+        first_order_dt=0.001,
+        second_order_dt=0.05,
     )
-    print(simulation.J_1_first_order[0])
-    print(simulation.J_2_first_order[0])
     anim = mutual_deception.animate_mutual_deception_duopoly(
         simulation=simulation,
-        frame_step_first_order=20,
+        frame_step_first_order=10000,
         frame_step_second_order=4,
     )
     _ = anim

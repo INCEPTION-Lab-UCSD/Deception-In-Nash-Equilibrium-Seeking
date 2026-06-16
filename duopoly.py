@@ -508,14 +508,7 @@ def animate_duopoly_plot(
             line.set_data(time_slice, values[:idx])
         delta_line.set_data(time_slice, delta_history[:idx])
 
-        time_box.set_text(rf"$t = {time_values[idx - 1]:.2f}\,\mathrm{{s}}$")
-
-        return (
-            *action_lines,
-            *payoff_lines,
-            delta_line,
-            time_box,
-        )
+        return (*action_lines, *payoff_lines, delta_line)
 
     ani = animation.FuncAnimation(
         fig,
@@ -995,7 +988,7 @@ def duopoly_animation_3d(
             Patch(facecolor="tab:blue", edgecolor="tab:blue", alpha=0.62),
             Patch(facecolor="tab:orange", edgecolor="tab:orange", alpha=0.58),
         ],
-        labels=[r"$\tilde{J}_1$", r"$J_2$"],
+        labels=[r"$J_1$", r"$J_2$"],
         loc="upper left",
         frameon=True,
         fancybox=False,
@@ -1023,7 +1016,7 @@ def duopoly_animation_3d(
             alpha=0.62,
             linewidth=0,
             antialiased=True,
-            label=r"\~{J}_1",
+            label=r"J_1",
         )
         surface_j2 = ax.plot_surface(
             X1,
@@ -1062,6 +1055,7 @@ def duopoly_animation_3d(
                 zorder=7,
             )
             intersection_lines.append(line)
+        intersection_lines[0].set_label("intersection line")
         ax.legend(loc="upper right", frameon=True, fancybox=False, edgecolor="0.6")
 
         contour.remove()
