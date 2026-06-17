@@ -80,31 +80,61 @@ def run_mutual_deception_duopoly_example():
     p = 0.2
     S_d = 100.0
 
-    simulation = mutual_deception.simulate_mutual_deception_duopoly(
-        x0=x,
-        a=a,
-        k=k,
-        omega_1=omega_1,
-        omega_2=omega_2,
-        J_1_ref=J_1_ref,
-        J_2_ref=J_2_ref,
-        epsilon=epsilon,
-        epsilon_1=epsilon_1,
-        epsilon_2=epsilon_2,
-        S_d=S_d,
-        p=p,
-        m=m,
-        first_order_horizon=1000.0,
-        second_order_horizon=50.0,
-        first_order_dt=0.001,
-        second_order_dt=0.05,
+    # first_order_simulation = (
+    #     mutual_deception.simulate_mutual_deception_duopoly_first_order(
+    #         x0=x,
+    #         a=a,
+    #         k=k,
+    #         omega_1=omega_1,
+    #         omega_2=omega_2,
+    #         J_1_ref=J_1_ref,
+    #         J_2_ref=J_2_ref,
+    #         epsilon=epsilon,
+    #         epsilon_1=epsilon_1,
+    #         epsilon_2=epsilon_2,
+    #         S_d=S_d,
+    #         p=p,
+    #         m=m,
+    #         horizon=1000.0,
+    #         dt=0.001,
+    #     )
+    # )
+    second_order_simulation = (
+        mutual_deception.simulate_mutual_deception_duopoly_second_order(
+            x0=x,
+            a=a,
+            k=k,
+            omega_1=omega_1,
+            omega_2=omega_2,
+            J_1_ref=J_1_ref,
+            J_2_ref=J_2_ref,
+            epsilon=epsilon,
+            epsilon_1=epsilon_1,
+            epsilon_2=epsilon_2,
+            G=np.array([[3.0, 13.0], [2.0, 10.0]]),
+            S_d=S_d,
+            p=p,
+            m=m,
+            horizon=50.0,
+            dt=0.05,
+        )
     )
-    anim = mutual_deception.animate_mutual_deception_duopoly(
-        simulation=simulation,
-        frame_step_first_order=10000,
-        frame_step_second_order=4,
+
+    # first_order_animation = (
+    #     mutual_deception.animate_mutual_deception_duopoly_first_order(
+    #         simulation=first_order_simulation,
+    #         frame_step=20000,
+    #     )
+    # )
+    second_order_animation = (
+        mutual_deception.animate_mutual_deception_duopoly_second_order(
+            simulation=second_order_simulation,
+            frame_step=3,
+        )
     )
-    _ = anim
+    _ = second_order_animation
+    ani = second_order_animation.animation
+    # ani.save(filename="../first_order_mutual_deception.gif")
     plt.show()
 
 
