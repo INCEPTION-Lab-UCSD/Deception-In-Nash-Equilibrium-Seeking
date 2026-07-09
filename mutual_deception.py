@@ -78,9 +78,6 @@ def quadratic_payoff_history(states, Q_1, b_1, Q_2, b_2):
 
 def second_order_initial_state(x0):
     x0 = np.asarray(x0, dtype=float)
-    # Accept either [x_1, x_2] or a MATLAB-style padded vector using x0[1], x0[2].
-    if x0.size >= 3:
-        return np.array([x0[1], x0[2], 0.0, 0.0, 0.0, 0.0], dtype=float)
     return np.array([x0[0], x0[1], 0.0, 0.0, 0.0, 0.0], dtype=float)
 
 
@@ -164,12 +161,12 @@ def udot(
     )
 
 
-def delta_1_second_order(rho, psi, G):
-    return G[0][1] / G[0][0] * rho - (G[0][1] / G[0][0] - 1) * psi
+def delta_1_second_order(z, e, G):
+    return G[0][1] / G[0][0] * e - (G[0][1] / G[0][0] - 1) * z
 
 
-def delta_2_second_order(rho, psi, G):
-    return G[1][1] / G[1][0] * rho - (G[1][1] / G[1][0] - 1) * psi
+def delta_2_second_order(z, e, G):
+    return G[1][1] / G[1][0] * e - (G[1][1] / G[1][0] - 1) * z
 
 
 def solve_second_order(
@@ -188,7 +185,6 @@ def solve_second_order(
     J_1_ref,
     J_2_ref,
     G,
-    time_eval,
     rtol=1e-6,
     atol=1e-8,
 ):
@@ -196,11 +192,10 @@ def solve_second_order(
         fun=u_dot_second_order,
         t_span=(0, time_horizon),
         y0=u_0,
+        method="RK45",
         rtol=rtol,
         atol=atol,
-        t_eval=time_eval,
-        max_step=float(np.max(np.diff(time_eval))) if len(time_eval) > 1 else np.inf,
-        dense_output=False,
+        dense_output=True,
         args=(
             omega_1,
             omega_2,
@@ -224,7 +219,7 @@ def solve_second_order(
     return sol
 
 
-# u = [action_1, action_2, rho_1, rho_2, psi_1, psi_2]
+# u = [action_1, action_2, z_1, e_1, z_2, e_2]
 def u_dot_second_order(
     t,
     u,
@@ -242,11 +237,15 @@ def u_dot_second_order(
     J_2_ref,
     G,
 ):
+    u_1, u_2, z_1, e_1, z_2, e_2 = u
+    delta_1 = delta_1_second_order(z_1, e_1, G)
+    delta_2 = delta_2_second_order(z_2, e_2, G)
+
     x = prices(
         t,
-        u[:2],
-        delta_1_second_order(u[2], u[4], G),
-        delta_2_second_order(u[3], u[5], G),
+        np.array([u_1, u_2]),
+        delta_1,
+        delta_2,
         omega_1,
         omega_2,
         a,
@@ -258,10 +257,10 @@ def u_dot_second_order(
         [
             (-2.0 * k / a) * J_1 * np.sin(omega_1 * t),
             (-2.0 * k / a) * J_2 * np.sin(omega_2 * t),
+            (1.0 / G[0][0]) * (-z_1 + e_1),
             epsilon_1 * (J_1 - J_1_ref),
+            (1.0 / G[1][0]) * (-z_2 + e_2),
             epsilon_2 * (J_2 - J_2_ref),
-            1 / G[0][1] * (-u[4] + u[2]),
-            1 / G[1][1] * (-u[5] + u[3]),
         ]
     )
 
@@ -368,17 +367,16 @@ def simulate_mutual_deception_duopoly_second_order(
         J_1_ref=J_1_ref,
         J_2_ref=J_2_ref,
         G=G,
-        time_eval=time,
     )
 
-    states = sol.y
+    states = sol.sol(time)
     J_1, J_2 = quadratic_payoff_history(states, Q_1, b_1, Q_2, b_2)
-    delta_1_history = delta_1_second_order(states[2], states[4], G)
-    delta_2_history = delta_2_second_order(states[3], states[5], G)
+    delta_1_history = delta_1_second_order(states[2], states[3], G)
+    delta_2_history = delta_2_second_order(states[4], states[5], G)
 
     _ = epsilon, delta_limit, action_limits
     return MutualDeceptionSimulation(
-        sol.t,
+        time,
         J_1,
         J_2,
         delta_1_history,

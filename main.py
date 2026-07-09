@@ -134,7 +134,7 @@ def run_mutual_deception_duopoly_example():
     )
     _ = second_order_animation
     ani = second_order_animation.animation
-    # ani.save(filename="../first_order_mutual_deception.gif")
+    ani.save(filename="./second_order_mutual_deception.gif")
     plt.show()
 
 
