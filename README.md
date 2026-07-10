@@ -72,15 +72,14 @@ render commands above to regenerate selected outputs.
 
 ## Citation
 ```bibtex
-@misc{tang2025deceptionnashequilibriumseeking,
-      title={Deception in Nash Equilibrium Seeking}, 
-      author={Michael Tang and Umar Javed and Xudong Chen and Miroslav Krstic and Jorge I. Poveda},
-      year={2025},
-      eprint={2407.05168},
-      archivePrefix={arXiv},
-      primaryClass={eess.SY},
-      url={https://arxiv.org/abs/2407.05168}, 
-}
+@ARTICLE{tang2025deceptionnashequilibriumseeking,
+  author={Tang, Michael and Javed, Umar and Chen, Xudong and Krstić, Miroslav and Poveda, Jorge I.},
+  journal={IEEE Transactions on Automatic Control}, 
+  title={Deception in Nash Equilibrium Seeking}, 
+  year={2025},
+  volume={70},
+  number={12},
+  pages={7984-7999}}
 ```
 
 ## License
