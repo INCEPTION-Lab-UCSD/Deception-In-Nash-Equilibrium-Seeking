@@ -71,17 +71,15 @@ Open these files directly from the `animations/` directory, or re-run the
 render commands above to regenerate selected outputs.
 
 ## Citation
-
-If you use this code, please cite the accompanying paper. Replace the placeholder
-fields below with the final paper metadata before release.
-
 ```bibtex
-@article{slavonia2026deception,
-  title = {Deception in Nash Equilibrium Seeking},
-  author = {Slavonia, Tom and Others},
-  journal = {To appear},
-  year = {2026},
-  note = {Code available at the project repository}
+@misc{tang2025deceptionnashequilibriumseeking,
+      title={Deception in Nash Equilibrium Seeking}, 
+      author={Michael Tang and Umar Javed and Xudong Chen and Miroslav Krstic and Jorge I. Poveda},
+      year={2025},
+      eprint={2407.05168},
+      archivePrefix={arXiv},
+      primaryClass={eess.SY},
+      url={https://arxiv.org/abs/2407.05168}, 
 }
 ```
 
